@@ -213,10 +213,15 @@ struct TabBarPanel: View {
 	// MARK: - Post Tap Actions
 
 	/// Handles additional actions after a tab is tapped.
-	/// Currently redraws from/to markers after a delay when Plan Trip tab is selected.
+	/// Restores an in-progress save form or redraws Plan Trip markers after a delay.
 	/// - Parameter type: The type of tab that was tapped
 	private func handlePostTapAction(for type: TabBarItemType) {
-		if type == .planTrip && menuManager.currentViewTab == .planTrip {
+        if type == .planTrip && ProfileManager.shared.pubEditTripFromPlanTrip {
+            menuManager.currentViewTab = .myTrips
+            menuManager.currentItemTab = .planTrip
+            ProfileManager.shared.pubShowTripList = false
+            ProfileManager.shared.pubTripPageTitle = "Save new trip".localized()
+        } else if type == .planTrip && menuManager.currentViewTab == .planTrip {
 			// Redraw markers after a short delay to ensure map is ready
 			DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
 				MapManager.shared.reDrawFromToMarkers()

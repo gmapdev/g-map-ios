@@ -65,7 +65,9 @@ struct TripManageViewer: View {
                             WeekdaysListView()
                         }
                     TripNotificationView()
-                    SavingTripTravelCompanions()
+                    if FeatureConfig.shared.isTravelCompanionEnable {
+                        SavingTripTravelCompanions()
+                    }
                     if AccessibilityManager.shared.pubIsLargeFontSize {
                         TripManageFooterButtonAODA()
                     } else {

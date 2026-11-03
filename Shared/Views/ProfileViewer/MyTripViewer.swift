@@ -44,7 +44,17 @@ struct MyTripViewer: View {
 						self.jumpToSavedTripItem(item: tripItem)
 					}
 				}
+                if profileManager.pubEditTripFromPlanTrip && tabBarMenuManager.currentItemTab == .myTrips {
+                    profileManager.pubShowTripList = true
+                    profileManager.pubTripPageTitle = "My Trips".localized()
+                }
             })
+            .onChange(of: tabBarMenuManager.currentItemTab) { oldValue, newValue in
+                if newValue == .myTrips && oldValue == .planTrip && profileManager.pubEditTripFromPlanTrip {
+                    profileManager.pubShowTripList = true
+                    profileManager.pubTripPageTitle = "My Trips".localized()
+                }
+            }
             .zIndex(99)
         }.background(profileManager.pubShowTripList ? Color.main : Color.white)
             .edgesIgnoringSafeArea(.all)

@@ -125,7 +125,7 @@ class JMapManager: NSObject, ObservableObject {
         options.clientSecret = JMapManager.clientSecret
         options.stage = self.canvas
         options.applyDisplayMode = true
-        options.clearCacheData = true
+        options.clearCacheData = false
         options.autoReloadCache = true
         self.jMap = JMap(options: options)
         self.jMap?.delegate = self

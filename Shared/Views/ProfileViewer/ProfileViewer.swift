@@ -194,27 +194,28 @@ struct ProfileViewer: View {
                 VStack{
                     ProfileFavoritePlaceView(action: { value in
                         showContent = value
-                    }, title: "Favorite Places".localized(), spacing: 0).padding(.top)
+                    }, title: "Saved places".localized(), spacing: 0).padding(.top)
                     if showContent{
+                        Color.clear.frame(height: 0).id(30)
+                        if FeatureConfig.shared.isTravelCompanionEnable {
+                            TravelCompanionsView()
+                        }
                         ProfileNotificationView(title: "Notifications".localized(), spacing: 0, sendTextCallBack: {
                             if !AccessibilityManager.shared.pubIsLargeFontSize {
                                 withAnimation {
-                                    reader.scrollTo(10)
+                                    reader.scrollTo(30, anchor: .top)
                                 }
                             }
                         }, changeNumberCallBack: {
                             if !AccessibilityManager.shared.pubIsLargeFontSize {
                                 withAnimation {
-                                    reader.scrollTo(10)
+                                    reader.scrollTo(30, anchor: .top)
                                 }
                             }
                         }).padding(.horizontal)
                         
-                        TravelCompanionsView()
-                        
                         LaunchDisclaimerView(title: "Terms".localized(), spacing: 0)
                             .padding(.top, 10)
-                            .id(10)
 						
 						
                         VStack{

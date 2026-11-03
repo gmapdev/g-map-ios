@@ -76,6 +76,9 @@ public class LoginAuthProvider {
 								self.retrieveUserInfo(userInfo: userInfo) {
 									callBack()
 								}
+							}else{
+								OTPLog.log(level: .warning, info: "User information missing after successful authentication")
+								callBack()
 							}
 						}else{
 							callBack()
@@ -91,7 +94,7 @@ public class LoginAuthProvider {
 				if let username = self.username, let password = self.password{
 					self.getAuth0AccessToken(username: username, password: password) { success, errMsg, _ in
 						if success{
-							self.getUserInfo {}
+							self.getUserInfo(callBack: callBack)
 						}else{
 							callBack()
 						}
@@ -160,6 +163,7 @@ public class LoginAuthProvider {
 	func getAuth0AccessToken(username: String, password: String, completion: @escaping(Bool, String, Token?) -> Void){
 		if !Env.shared.isNetworkConnected {
 			completion(false, "No Internet connection", nil)
+			return
 		}
 		let api = OTPAPIRequest()
 		let url = BrandConfig.shared.auth0_domain + "/oauth/token"
@@ -305,14 +309,16 @@ public class LoginAuthProvider {
 					newLoginInfo.phoneNumber = user.phoneNumber
 					newLoginInfo.phoneVerified = user.isPhoneNumberVerified
 					newLoginInfo.savedLocations = user.savedLocations
-					newLoginInfo.storeTripHistory = user.storeTripHistory
+					newLoginInfo.storeTripHistory = FeatureConfig.shared.visible_store_trip_history_option ? user.storeTripHistory : true
                     newLoginInfo.pushDevices = user.pushDevices
 					
 					AppSession.shared.loginInfo = newLoginInfo
                     AppSession.shared.tempLoginInfo = newLoginInfo
                     
-                    MobileQuestionnairViewModel.shared.selectedMobilityProfile = user.mobilityProfile
-                    MobileQuestionnairViewModel.shared.serverMobilityProfile = user.mobilityProfile
+                    if FeatureConfig.shared.isMobilityProfileEnable {
+                        MobileQuestionnairViewModel.shared.selectedMobilityProfile = user.mobilityProfile
+                        MobileQuestionnairViewModel.shared.serverMobilityProfile = user.mobilityProfile
+                    }
 					
                     TravelCompanionsViewModel.shared.pubCompanions.removeAll()
                     if let companions = user.relatedUsers{
@@ -321,7 +327,8 @@ public class LoginAuthProvider {
                         
                     }
                     TravelCompanionsViewModel.shared.pubDependents.removeAll()
-                    if let dependents = user.dependents, !(dependents.isEmpty){
+                    if FeatureConfig.shared.isTravelCompanionEnable,
+                       let dependents = user.dependents, !(dependents.isEmpty){
                         let allDependents = dependents.joined(separator: ",")
                         self.userAccountProvider.getDependentsMobilityProfile(dependentIds: allDependents) { success, dependentsList in
                             if success, let dependents = dependentsList{

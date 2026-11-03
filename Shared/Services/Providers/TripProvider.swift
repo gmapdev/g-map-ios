@@ -38,6 +38,8 @@ struct RoutingErrorResponse: Hashable {
 /// Encapsulates the complete GraphQL query and variables needed for
 /// trip planning requests to the OTP server.
 struct RequestTripPlan: Codable {
+    /// Shared nine-character identifier for all subrequests of one trip search.
+    let batchId: String
     /// The GraphQL query string
     let query: String?
 
@@ -186,7 +188,8 @@ class TripProvider: BaseProvider {
     ///     }
     /// }
     /// ```
-    func retrieveTripPlanUsingGraphQL(fromPlaceEncoded: String, toPlaceEncoded: String, date: String, time: String, wheelchair: Bool, bannedRouteObject: [String: String]?, arBy: Bool, walkReluctanceValue: Int, walkSpeed: Double, requestParams:String, modeType: [SelectedMode], mobilityProfile: String?, completion: @escaping ((OTPPlanTrip?, [RoutingErrorResponse], Int, [String: Any])->Void)){
+    /// - Parameter batchId: Identifier shared by the parent search's mode-combination requests.
+    func retrieveTripPlanUsingGraphQL(fromPlaceEncoded: String, toPlaceEncoded: String, date: String, time: String, wheelchair: Bool, bannedRouteObject: [String: String]?, arBy: Bool, walkReluctanceValue: Int, walkSpeed: Double, requestParams:String, modeType: [SelectedMode], mobilityProfile: String?, batchId: String, completion: @escaping ((OTPPlanTrip?, [RoutingErrorResponse], Int, [String: Any])->Void)){
         errorMessage.removeAll()
         
         
@@ -196,7 +199,7 @@ class TripProvider: BaseProvider {
         
         
         //MARK: - for requesting GraphQL Query from our APIManager, we need to pass Query and variable in key-value pair as paramaters
-        let requestTripPlan = RequestTripPlan(query: requestQuery,
+        let requestTripPlan = RequestTripPlan(batchId: batchId, query: requestQuery,
                                               variables: PlanTripVariables(arriveBy: arBy,
                                                                    banned: bannedRouteObject,
                                                                    date: date,
@@ -218,7 +221,11 @@ class TripProvider: BaseProvider {
         }catch{
             OTPLog.log(level: .error, info: "can not convert the parameters to the proper body data.\(requestTripPlan)")
         }
-        api.request(method: .post, path: BrandConfig.shared.graphQL_base_url, params: jsonKeyPair, headers: [:], format: .JSON, timeout: 30.0) { data, error, response in
+        var headers: [String: String] = [:]
+        if let session = AppSession.shared.loginInfo, session.emailIsVerified, !session.token.isEmpty {
+            headers["authorization"] = "Bearer \(session.token)"
+        }
+        api.request(method: .post, path: BrandConfig.shared.graphQL_base_url, params: jsonKeyPair, headers: headers, format: .JSON, timeout: 30.0) { data, error, response in
             
             guard let data = data else {
                 OTPLog.log(level:.info, info:"cannot receive the Trip list response")

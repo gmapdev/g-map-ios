@@ -73,11 +73,58 @@ struct LaunchDisclaimerView: View {
                         .frame(width: ScreenSize.width()-40)
 						.padding(.bottom, 20)
 						.padding(.top, 20)
+                        if FeatureConfig.shared.visible_store_trip_history_option {
+                            HStack {
+                                Button(action: {
+                                    profileManager.pubStoreTripHistory.toggle()
+                                    AppSession.shared.loginInfo?.storeTripHistory = profileManager.pubStoreTripHistory
+                                }, label: {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 5)
+                                            .fill(profileManager.pubStoreTripHistory ? Color.blue : Color.white)
+                                            .roundedBorder(5, 0)
+                                            .frame(width: checkBoxSize + 5, height: checkBoxSize + 5)
+                                        if profileManager.pubStoreTripHistory {
+                                            Image(systemName: "checkmark")
+                                                .resizable()
+                                                .foregroundColor(.white)
+                                                .frame(width: checkBoxSize, height: checkBoxSize)
+                                        }
+                                    }
+                                    .frame(width: checkBoxSize * 2, height: checkBoxSize * 2)
+                                })
+                                .accessibilityElement(children: .combine)
+                                .addAccessibility(text: "Check box, double tap to %1 the option. Optional: I consent to the trip planner storing my historical planned trips in order to improve transit services in my area.".localized(profileManager.pubStoreTripHistory ? "uncheck".localized() : "check".localized()))
+                                hilightedText(str: "Optional: I consent to the trip planner storing my historical planned trips in order to improve transit services in my area. More info...".localized(), searched: "More info...".localized())
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .onTapGesture {
+                                        let termsString = FeatureConfig.shared.url_terms_of_storage.replacingOccurrences(of: "{locale}", with: Helper.shared.getLanguageCode())
+                                        if let url = URL(string: termsString) {
+                                            UIApplication.shared.open(url)
+                                        }
+                                    }
+                                    .addAccessibility(text: "Double tap to read more about trip history storage.".localized())
+                                Spacer()
+                            }
+                            .frame(width: ScreenSize.width() - 40)
+                            .padding(.bottom, 20)
+                        }
 						Spacer()
 					}
         }
         .padding(.horizontal)
+        .onAppear(perform: applyHiddenHistoryPreference)
+        .onChange(of: FeatureConfig.shared.visible_store_trip_history_option) { _ in
+            applyHiddenHistoryPreference()
+        }
 	}
+
+    private func applyHiddenHistoryPreference() {
+        if !FeatureConfig.shared.visible_store_trip_history_option {
+            profileManager.pubStoreTripHistory = true
+            AppSession.shared.loginInfo?.storeTripHistory = true
+        }
+    }
     
     /// Hilighted text.
     /// - Parameters:

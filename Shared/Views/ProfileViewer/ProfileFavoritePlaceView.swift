@@ -418,7 +418,7 @@ struct ProfileAutoCompleteAddressArea: View {
                             }
                             profileManager.pubLastTripListUpdate = Date().timeIntervalSince1970
                         })
-                        .frame(height: ScreenSize.height() - (keyboardHeight + (state == .addNewPlace ? 250 : 180)))
+                        .frame(height: max(0, ScreenSize.height() - (state == .addNewPlace ? 380 : 300)))
                     }
                 }
                 .padding(.bottom, 20)
@@ -433,6 +433,7 @@ struct ProfileAutoCompleteAddressArea: View {
                     Button(action: {
                         self.state = .view
                         searchedPlaceText = ""
+                        ProfileManager.shared.pubShowSearchLocationView = false
                         action?(true)
                     }, label: {
                         HStack{
@@ -569,7 +570,10 @@ struct ProfileAutoCompleteAddressArea: View {
                 }
             }
             .padding([.horizontal],20)
-            .padding(.bottom, 0)
+            .padding(.bottom, keyboardHeight > 0 ? keyboardHeight : 20)
+            .onAppear {
+                ProfileManager.shared.pubShowSearchLocationView = false
+            }
             .onReceive(keyboardHeightPublisher) { self.keyboardHeight = $0 }
         }
     }
@@ -590,10 +594,6 @@ struct ProfileAutoCompleteAddressArea: View {
         let width = CGFloat(text.count * (AccessibilityManager.shared.pubIsLargeFontSize ? Int(AccessibilityManager.shared.getFontSize()) : 9))
         let maxWidth = (ScreenSize.width() - 80)
         let lines = width / maxWidth
-        if lines < 0 {
-            return 40
-        } else {
-            return (lines * 40)
-        }
+        return max(40, lines * 40)
     }
 }

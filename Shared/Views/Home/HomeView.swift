@@ -709,6 +709,9 @@ struct HomeView: View {
                                 ProfileTripModel.shared.pubisTripEditable = true
                                 ProfileTripModel.shared.pubCompanionDropdownItem = TravelCompanionsViewModel.shared.getCompanionList()
                                 ProfileTripModel.shared.pubObserversDropdownitem = TravelCompanionsViewModel.shared.getCompanionList()
+                                profileManager.tripManagerState = .creation
+                                profileManager.selectedTripNotification = nil
+                                ProfileTripModel.shared.pubCustomNameForTrip = ""
 							}
 						}else{
 							loginFlowManager.pageState = .login

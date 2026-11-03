@@ -17,6 +17,7 @@ struct ProfileNotificationView: View {
     
     @State var verificationCode = ""
     @State var enableChangePhoneNumber = false
+    @State private var originalPhoneNumber = ""
     
     @Inject var notificationProvider: NotificationProvider
     var sendTextCallBack: (() -> Void)?
@@ -182,6 +183,8 @@ struct ProfileNotificationView: View {
                                                         .clipShape(RoundedRectangle.init(cornerRadius: 5))
 													Button(action: {
 														self.enableChangePhoneNumber = true
+                                                        self.originalPhoneNumber = profileManager.pubNotificationPhoneNumber
+                                                        profileManager.pubNotificationPhoneNumber = ""
 														changeNumberCallBack?()
 													}, label: {
 														HStack{
@@ -219,6 +222,8 @@ struct ProfileNotificationView: View {
 													Spacer()
 													Button(action: {
 														self.enableChangePhoneNumber = true
+                                                        self.originalPhoneNumber = profileManager.pubNotificationPhoneNumber
+                                                        profileManager.pubNotificationPhoneNumber = ""
 														changeNumberCallBack?()
 													}, label: {
 														HStack{
@@ -258,6 +263,8 @@ struct ProfileNotificationView: View {
                                                         .clipShape(RoundedRectangle.init(cornerRadius: 5))
 													Button(action: {
 														self.enableChangePhoneNumber = true
+                                                        self.originalPhoneNumber = profileManager.pubNotificationPhoneNumber
+                                                        profileManager.pubNotificationPhoneNumber = ""
 														changeNumberCallBack?()
 													}, label: {
 														HStack{
@@ -346,8 +353,6 @@ struct ProfileNotificationView: View {
 											if let newValue = newValue {
 												profileManager.pubNotificationPhoneNumber = Helper.shared.formatPhoneNumber(newValue)
 											}
-										}, onTapTrigger: {
-											changeNumberCallBack?()
 										})
 										.roundedBorder(0,0)
 										.onAppear(perform: {profileManager.pubValidPhoneNumberLimit = true})
@@ -397,6 +402,7 @@ struct ProfileNotificationView: View {
 												})
 												Spacer().frame(height: 10)
 												Button(action: {
+                                                    profileManager.pubNotificationPhoneNumber = self.originalPhoneNumber
 													self.enableChangePhoneNumber = false
 												}, label: {
 													HStack{

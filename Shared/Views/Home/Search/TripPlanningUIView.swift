@@ -886,18 +886,6 @@ struct TripPlanningUIView: View {
                     }
                 }
                 
-                if searchLocationViewModel.getOtherLocations().count > 0 {
-                    HStack{
-                        TextLabel("Addresses, Landmarks and Places".localized(), .bold, .body).foregroundColor(Color.black)
-                            .addAccessibility(text: "Addresses, Landmarks and Places, %1 in total".localized(searchLocationViewModel.getOtherLocations().count))
-                            .accessibilityAddTraits(.isHeader)
-                        Spacer()
-                    }
-                }
-                ForEach(searchLocationViewModel.getOtherLocations()) { location in
-                    item(by: location)
-                }
-                
                 if searchLocationViewModel.getStopLocations().count > 0 {
                     HStack{
                         TextLabel("Stops".localized(), .bold, .body).foregroundColor(Color.black)
@@ -910,15 +898,26 @@ struct TripPlanningUIView: View {
                     item(by: location)
                 }
                 
+                if searchLocationViewModel.getOtherLocations().count > 0 {
+                    HStack{
+                        TextLabel("Other".localized(), .bold, .body).foregroundColor(Color.black)
+                            .addAccessibility(text: "Addresses, Landmarks and Places, %1 in total".localized(searchLocationViewModel.getOtherLocations().count))
+                            .accessibilityAddTraits(.isHeader)
+                        Spacer()
+                    }
+                }
+                ForEach(searchLocationViewModel.getOtherLocations()) { location in
+                    item(by: location)
+                }
+                
                 if !searchLocationViewModel.recentLocations.isEmpty {
                     recentListView
                 }
-                currentLocationView()
                 if searchSettings.pubIsProcessing{
                     VStack{
                         HStack{
-                            TextLabel("Favorite Places".localized(), .bold, .body).foregroundColor(Color.black)
-                                .addAccessibility(text: "Favorite Places, %1 in total".localized(getItems().count))
+                            TextLabel("My Places".localized(), .bold, .body).foregroundColor(Color.black)
+                                .addAccessibility(text: "My Places, %1 in total".localized(getItems().count))
                                 .accessibilityAddTraits(.isHeader)
                             Spacer()
                         }.padding(.top)
@@ -929,8 +928,8 @@ struct TripPlanningUIView: View {
                         
                         VStack{
                             HStack{
-                                TextLabel("Favorite Places".localized(), .bold, .body).foregroundColor(Color.black)
-                                    .addAccessibility(text: "Favorite Places, %1 in total".localized(getItems().count))
+                                TextLabel("My Places".localized(), .bold, .body).foregroundColor(Color.black)
+                                    .addAccessibility(text: "My Places, %1 in total".localized(getItems().count))
                                     .accessibilityAddTraits(.isHeader)
                                 Spacer()
                             }.padding(.top)
@@ -944,6 +943,7 @@ struct TripPlanningUIView: View {
                         }
                     }
                 }
+                currentLocationView()
             }
             .background(Color.white)
         }

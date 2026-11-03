@@ -64,7 +64,23 @@ struct SearchLocationView: View {
         ScrollView {
             VStack (alignment: .leading) {
                 Spacer().frame(height: 10)
-                ForEach(viewModel.locations) { location in
+                if !viewModel.getStopLocations().isEmpty {
+                    TextLabel("Stops".localized(), .bold, .body).foregroundColor(.black)
+                        .addAccessibility(text: "Stops, %1 in total".localized(viewModel.getStopLocations().count))
+                        .accessibilityAddTraits(.isHeader)
+                        .padding(.horizontal, 22)
+                }
+                ForEach(viewModel.getStopLocations()) { location in
+                    item(by: location)
+                        .padding(.horizontal, 22)
+                }
+                if !viewModel.getOtherLocations().isEmpty {
+                    TextLabel("Other".localized(), .bold, .body).foregroundColor(.black)
+                        .addAccessibility(text: "Addresses, Landmarks and Places, %1 in total".localized(viewModel.getOtherLocations().count))
+                        .accessibilityAddTraits(.isHeader)
+                        .padding(.horizontal, 22)
+                }
+                ForEach(viewModel.getOtherLocations()) { location in
                     item(by: location)
                         .padding(.horizontal, 22)
                 }

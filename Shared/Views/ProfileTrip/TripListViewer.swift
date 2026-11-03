@@ -206,6 +206,7 @@ struct SavedTripItemView: View {
                     auth0Provider.getUserInfo {}
                     updateTripModelItem()
                     ProfileManager.shared.pubShowTripList = false
+                    ProfileManager.shared.pubEditTripFromPlanTrip = false
                     ProfileManager.shared.pubTripPageTitle = isTripEditable ? "Edit saved trip".localized() : "View saved trip"
                 }, label: {
                     VStack{
@@ -263,6 +264,7 @@ struct SavedTripItemView: View {
                     Spacer()
                 }
 				
+                if FeatureConfig.shared.isPreviewTripEnable {
 				Button(action: {
 					MapManager.shared.cleanPlotRoute()
 					MapManager.shared.forceCleanMapReDrawRoute()
@@ -300,6 +302,7 @@ struct SavedTripItemView: View {
 				Spacer()
 				Divider().background(Color.gray.opacity(0.77))
 				Spacer()
+                }
                 
                 Button(action: {
                     AlertManager.shared.presentConfirm(title: "", message: "Would you like to remove this trip?".localized(), primaryButtonText: "Ok".localized(), secondaryButtonText: "Cancel".localized()) { buttonText in
@@ -555,6 +558,7 @@ struct SavedTripItemViewAODA: View {
                     auth0Provider.getUserInfo {}
                     updateTripModelItem()
                     ProfileManager.shared.pubShowTripList = false
+                    ProfileManager.shared.pubEditTripFromPlanTrip = false
                     ProfileManager.shared.pubTripPageTitle = isTripEditable ? "Edit saved trip".localized() : "View saved trip"
                 }, label: {
                     Image("btn_edit")
@@ -606,6 +610,7 @@ struct SavedTripItemViewAODA: View {
                     Spacer()
                 }
 				
+                if FeatureConfig.shared.isPreviewTripEnable {
 				Button(action: {
                     MapManager.shared.cleanPlotRoute()
                     MapManager.shared.forceCleanMapReDrawRoute()
@@ -639,6 +644,7 @@ struct SavedTripItemViewAODA: View {
 				Spacer()
 				Divider().background(Color.gray.opacity(0.77))
 				Spacer()
+                }
                 
                 Button(action: {
                     AlertManager.shared.presentConfirm(title: "", message: "Would you like to remove this trip?".localized(), primaryButtonText: "Ok".localized(), secondaryButtonText: "Cancel".localized()) { buttonText in

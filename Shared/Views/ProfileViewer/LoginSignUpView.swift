@@ -176,14 +176,19 @@ public struct AutoHeightTextField: View {
 							 }
 						 })
 					 }
+                     if onTapTrigger != nil && !text.isEmpty {
+                         Color.clear
+                             .contentShape(Rectangle())
+                             .onTapGesture {
+                                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                                 onTapTrigger?()
+                             }
+                     }
 				 }
 				 Spacer()
 			 }
 		 }
 		.addAccessibility(text: "Enter your %1, Double Tap to Enter %2".localized(placeholder ?? "text", placeholder ?? "text"))
-         .onTapGesture {
-             onTapTrigger?()
-         }
 	}
 }
 

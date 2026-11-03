@@ -302,10 +302,15 @@ class UserAccountProvider: BaseProvider {
         loginInfo.notificationChannel = ProfileManager.shared.pubNotificationType.joined(separator: ",")
 		
 		loginInfo.phoneNumber = ProfileManager.shared.pubNotificationPhoneNumber
+        if !FeatureConfig.shared.visible_store_trip_history_option {
+            loginInfo.storeTripHistory = true
+            AppSession.shared.loginInfo?.storeTripHistory = true
+            ProfileManager.shared.pubStoreTripHistory = true
+        }
         
         let mobilityProfile = FeatureConfig.shared.enable_mobile_questionairs ? MobileQuestionnairViewModel.shared.selectedMobilityProfile : nil
         
-        let relatedUser = TravelCompanionsViewModel.shared.pubCompanions
+        let relatedUser = FeatureConfig.shared.isTravelCompanionEnable ? TravelCompanionsViewModel.shared.pubCompanions : nil
         
 		let newOTPUser = OTPUserInfo(id:loginInfo.id,
 									 auth0UserId: loginInfo.auth0UserId,

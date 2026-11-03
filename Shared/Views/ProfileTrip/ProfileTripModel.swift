@@ -418,56 +418,91 @@ class ProfileTripModel: ObservableObject{
     ///   - String: Parameter description
     /// - Returns: Void))
     public func storeNotificationToServer(creation: Bool ,completion:@escaping ((Bool, String)->Void)){
-        guard let itinerary = ProfileManager.shared.selectedItinerary, let tripPlan = ProfileManager.shared.selectedGraphQLTripPlan else {
-            completion(false, "no itinerary information, update failed".localized())
+        guard let itinerary = ProfileManager.shared.selectedItinerary,
+              ProfileManager.shared.selectedGraphQLTripPlan != nil,
+              let legs = itinerary.legs, !legs.isEmpty else {
+            completion(false, "Unable to save this trip because itinerary information is not available. Please try again after the trip has finished loading.".localized())
+            return
+        }
+        guard let userId = AppSession.shared.loginInfo?.id, !userId.isEmpty,
+              pubWeekdays.count == 7 else {
+            completion(false, "Trip information is incomplete. Please refresh and try again.".localized())
             return
         }
         let leadTimeInMinutes = NotificationLeadingTime.toValue(label: pubAdvancedSetting)
         let minutesThreshold = NotificationDelayTime.toValue(label: pubDelayNotification)
-        let userId = AppSession.shared.loginInfo?.id ?? ""
         let alert = pubRealtimeAlertNotification == "Yes (default)".localized()
         let notifyChange = pubAlternativeRouteNotification == "Yes (default)".localized()
-        var tripNotification: [String: Any] = [:]
-        var itineraryObject: [String: Any] = [:]
+        let itineraryObject: [String: Any]
         do {
             itineraryObject = try DataHelper.convertToDictionary(object: itinerary)
         } catch {
             OTPLog.log(level: .error, info: "\(error.localizedDescription)")
+            completion(false, "Unable to prepare the itinerary details. Please try again.".localized())
+            return
+        }
+        guard !itineraryObject.isEmpty else {
+            completion(false, "Itinerary details are incomplete. Please wait for the trip to finish loading and try again.".localized())
+            return
         }
         var companionDict: [String: Any]?
-        if let selectedCompanion = TravelCompanionsViewModel.shared.getCompanionObject(email: self.pubCompanionOnThisTrip){
+        // Preserve existing associations on updates, but do not attach hidden selections to new trips.
+        if (!creation || FeatureConfig.shared.isTravelCompanionEnable),
+           let selectedCompanion = TravelCompanionsViewModel.shared.getCompanionObject(email: self.pubCompanionOnThisTrip){
             do {
                 companionDict = try DataHelper.convertToDictionary(object: selectedCompanion)
             } catch {
                 OTPLog.log(level: .error, info: "\(error.localizedDescription)")
+                completion(false, "Unable to prepare travel companion details. Please try again.".localized())
+                return
             }
         }
 
-        // This won't work beacuse Observers should be in array format
         var observerDict: [[String: Any]]?
-        if let selectedObserver = TravelCompanionsViewModel.shared.getObserversObject(observers: self.pubObserversOnthisTrip){
+        if (!creation || FeatureConfig.shared.isTravelCompanionEnable),
+           let selectedObserver = TravelCompanionsViewModel.shared.getObserversObject(observers: self.pubObserversOnthisTrip){
             do {
                 let observerData = try JSONEncoder().encode(selectedObserver)
-                if let jsonData = try JSONSerialization.jsonObject(with: observerData, options: []) as? [[String: Any]]? {
-                    observerDict = jsonData
+                guard let jsonData = try JSONSerialization.jsonObject(with: observerData, options: []) as? [[String: Any]] else {
+                    completion(false, "Unable to prepare observer details. Please try again.".localized())
+                    return
                 }
+                observerDict = jsonData
             } catch {
                 OTPLog.log(level: .error, info: "\(error.localizedDescription)")
+                completion(false, "Unable to prepare observer details. Please try again.".localized())
+                return
             }
         }
-        
-        if creation == false{
-            if let tripNotificationResponse = tripNotificationResponse {
-                tripNotification = prepareRequestData(id: id ?? "", minutesThreshold: minutesThreshold, isActive: pubIsActive, itineraryObject: itineraryObject, leadTimeInMinutes: leadTimeInMinutes, userId: userId, monday: pubWeekdays[0].isChecked, tuesday: pubWeekdays[1].isChecked, wednesday: pubWeekdays[2].isChecked, thursday: pubWeekdays[3].isChecked, friday: pubWeekdays[4].isChecked, saturday: pubWeekdays[5].isChecked, sunday: pubWeekdays[6].isChecked, tripName: pubCustomNameForTrip, snoozed: pubSnoozed, notifyChange: notifyChange, isCreation: false, notifyOnAlert: alert, otp2QueryParams: tripNotificationResponse.otp2QueryParams, companion: companionDict, observer: observerDict)
-                
+
+        let requestId: String
+        let queryParams: PlanTripVariables
+        if !creation {
+            guard let response = tripNotificationResponse,
+                  let existingId = id, !existingId.isEmpty,
+                  let params = response.otp2QueryParams else {
+                completion(false, "Unable to update this trip because existing trip details are unavailable. Please refresh and try again.".localized())
+                return
             }
+            requestId = existingId
+            queryParams = params
         } else {
-            if let otp2QueryParams = itinerary.otp2QueryParam {
-                tripNotification = prepareRequestData(id: id ?? UUID().uuidString, minutesThreshold: minutesThreshold, isActive: pubIsActive, itineraryObject: itineraryObject, leadTimeInMinutes: leadTimeInMinutes, userId: userId, monday: pubWeekdays[0].isChecked, tuesday: pubWeekdays[1].isChecked, wednesday: pubWeekdays[2].isChecked, thursday: pubWeekdays[3].isChecked, friday: pubWeekdays[4].isChecked, saturday: pubWeekdays[5].isChecked, sunday: pubWeekdays[6].isChecked, tripName: pubCustomNameForTrip, snoozed: pubSnoozed, notifyChange: notifyChange, isCreation: true, notifyOnAlert: alert, otp2QueryParams: otp2QueryParams, companion: companionDict, observer: observerDict)
+            guard let params = itinerary.otp2QueryParam else {
+                completion(false, "Trip information is not ready yet. Please wait for the itinerary to finish loading and try again.".localized())
+                return
             }
+            requestId = UUID().uuidString
+            queryParams = params
         }
-        let forCreation = ProfileManager.shared.tripManagerState == .creation
-        self.notificationProvider.updateNotification(tripNotification: tripNotification, forCreation: forCreation ) { success, errorMessage in
+        let tripNotification: [String: Any]
+        do {
+            tripNotification = try prepareRequestData(id: requestId, minutesThreshold: minutesThreshold, isActive: pubIsActive, itineraryObject: itineraryObject, leadTimeInMinutes: leadTimeInMinutes, userId: userId, monday: pubWeekdays[0].isChecked, tuesday: pubWeekdays[1].isChecked, wednesday: pubWeekdays[2].isChecked, thursday: pubWeekdays[3].isChecked, friday: pubWeekdays[4].isChecked, saturday: pubWeekdays[5].isChecked, sunday: pubWeekdays[6].isChecked, tripName: pubCustomNameForTrip, snoozed: pubSnoozed, notifyChange: notifyChange, isCreation: creation, notifyOnAlert: alert, otp2QueryParams: queryParams, companion: companionDict, observer: observerDict)
+        } catch {
+            OTPLog.log(level: .error, info: "Unable to prepare saved trip request: \(error.localizedDescription)")
+            completion(false, "Trip information is incomplete. Please refresh and try again.".localized())
+            return
+        }
+        self.notificationProvider.updateNotification(tripNotification: tripNotification, forCreation: creation) { success, errorMessage in
             completion(success, errorMessage ?? "")
         }
     }
@@ -496,15 +531,14 @@ class ProfileTripModel: ObservableObject{
     ///   - otp2QueryParams: Parameter description
     ///   - companion: Parameter description
     ///   - observer: Parameter description
+    /// - Throws: When query parameters cannot be serialized.
     /// - Returns: [String: Any]
-    func prepareRequestData(id: String, minutesThreshold: Int, isActive: Bool, itineraryObject: [String: Any], leadTimeInMinutes: Int, userId: String, monday: Bool, tuesday: Bool, wednesday: Bool, thursday: Bool, friday: Bool, saturday: Bool, sunday: Bool, tripName: String, snoozed: Bool, notifyChange: Bool, isCreation: Bool, notifyOnAlert: Bool, otp2QueryParams: PlanTripVariables?, companion: [String: Any]?, observer: [[String: Any]]?) -> [String: Any]{
+    func prepareRequestData(id: String, minutesThreshold: Int, isActive: Bool, itineraryObject: [String: Any], leadTimeInMinutes: Int, userId: String, monday: Bool, tuesday: Bool, wednesday: Bool, thursday: Bool, friday: Bool, saturday: Bool, sunday: Bool, tripName: String, snoozed: Bool, notifyChange: Bool, isCreation: Bool, notifyOnAlert: Bool, otp2QueryParams: PlanTripVariables, companion: [String: Any]?, observer: [[String: Any]]?) throws -> [String: Any]{
         
         var jsonObject: [String: Any] = [:]
-        var otp2QueryParamsDict: [String: Any] = [:]
-        do {
-            otp2QueryParamsDict = try DataHelper.convertToDictionary(object: otp2QueryParams)
-        } catch {
-            OTPLog.log(level: .error, info: "\(error.localizedDescription)")
+        let otp2QueryParamsDict = try DataHelper.convertToDictionary(object: otp2QueryParams)
+        guard !otp2QueryParamsDict.isEmpty else {
+            throw NSError(domain: "ProfileTripModel", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing trip query parameters"])
         }
         jsonObject["id"] = id
         jsonObject["arrivalVarianceMinutesThreshold"] = minutesThreshold

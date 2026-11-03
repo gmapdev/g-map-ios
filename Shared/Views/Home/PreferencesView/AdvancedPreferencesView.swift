@@ -135,7 +135,9 @@ struct AdvancedPreferencesView: View {
             VStack(spacing: 0){
                 Spacer().frame(height: selectedTimeSetting != .leaveNow ? 130 : 70)
                 
-                if let _ = AppSession.shared.loginInfo {
+                if FeatureConfig.shared.isMobilityProfileEnable,
+                   FeatureConfig.shared.isTravelCompanionEnable,
+                   let _ = AppSession.shared.loginInfo {
                     if !TravelCompanionsViewModel.shared.pubDependents.isEmpty{
                         VStack{
                             HStack{
