@@ -78,12 +78,19 @@ struct SplashScreen: View {
             SplashScreenItem(width: 750, height: 1334, fileNameSuffix: "750x1334"),
             SplashScreenItem(width: 768, height: 1024, fileNameSuffix: "768x1024"),
             SplashScreenItem(width: 828, height: 1792, fileNameSuffix: "828x1792"),
+            SplashScreenItem(width: 960, height: 640, fileNameSuffix: "960x640"),
+            SplashScreenItem(width: 960, height: 1440, fileNameSuffix: "960x1440"),
+            SplashScreenItem(width: 1024, height: 768, fileNameSuffix: "1024x768"),
             SplashScreenItem(width: 1125, height: 2436, fileNameSuffix: "1125x2436"),
             SplashScreenItem(width: 1242, height: 2208, fileNameSuffix: "1242x2208"),
             SplashScreenItem(width: 1242, height: 2688, fileNameSuffix: "1242x2688"),
-            SplashScreenItem(width: 1536, height: 2048, fileNameSuffix: "1536x2048")
+            SplashScreenItem(width: 1242, height: 2668, fileNameSuffix: "1242x2668"),
+            SplashScreenItem(width: 1280, height: 1920, fileNameSuffix: "1280x1920"),
+            SplashScreenItem(width: 1440, height: 960, fileNameSuffix: "1440x960"),
+            SplashScreenItem(width: 1536, height: 2048, fileNameSuffix: "1536x2048"),
+            SplashScreenItem(width: 1792, height: 828, fileNameSuffix: "1792x828"),
+            SplashScreenItem(width: 1920, height: 1280, fileNameSuffix: "1920x1280")
         ]
         return availableSplashImages
     }
 }
-

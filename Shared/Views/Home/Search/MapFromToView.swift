@@ -827,8 +827,8 @@ struct MapFromToView: View {
                 if settings.pubIsProcessing{
                     VStack{
                         HStack{
-                            TextLabel("Favorite Places".localized(), .bold, .body).foregroundColor(Color.black)
-                                .addAccessibility(text: "Favorite Places, %1 in total".localized(getItems().count))
+                            TextLabel("My Places".localized(), .bold, .body).foregroundColor(Color.black)
+                                .addAccessibility(text: "My Places, %1 in total".localized(getItems().count))
                                 .accessibilityAddTraits(.isHeader)
                             Spacer()
                         }.padding(.top)
@@ -839,8 +839,8 @@ struct MapFromToView: View {
                         
                         VStack{
                             HStack{
-                                TextLabel("Favorite Places".localized(), .bold, .body).foregroundColor(Color.black)
-                                    .addAccessibility(text: "Favorite Places, %1 in total".localized(getItems().count))
+                                TextLabel("My Places".localized(), .bold, .body).foregroundColor(Color.black)
+                                    .addAccessibility(text: "My Places, %1 in total".localized(getItems().count))
                                     .accessibilityAddTraits(.isHeader)
                                 Spacer()
                             }.padding(.top)

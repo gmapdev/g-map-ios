@@ -88,9 +88,9 @@ struct SideMenuItemsView: View{
     /// - Parameters:
     ///   - some: Parameter description
     var body: some View{
-        ForEach(0..<menuItems.count){ index in
-            if menuItems[index].isVisible{
-                MenuItemView(menuItem: menuItems[index])
+        ForEach(menuItems) { item in
+            if item.isVisible {
+                MenuItemView(menuItem: item)
             }
         }
     }
@@ -112,23 +112,48 @@ struct MenuItemView: View{
         }
         .padding(.horizontal)
         .onTapGesture {
-            if let type = menuItem.type {
-                if type == MenuType.startOver.rawValue {
-                    MapFromToViewModel.shared.resetAction()
-                    moveToPlanTripPage()
-                    HomeViewModel.shared.pubOpenSideMenu = false
-                } else {
-                    if let url = URL(string: menuItem.url ?? "https://sound-transit.ibi-transit.com") {
-                        UIApplication.shared.open(url)
-                    }
-                }
-            } else {
-                if let url = URL(string: menuItem.url ?? "https://sound-transit.ibi-transit.com") {
-                    UIApplication.shared.open(url)
-                }
-            }
+            handleTap()
         }
         .addAccessibility(text: "%1 Button, Double tap to activate".localized(menuItem.title ?? ""))
+    }
+
+    @MainActor private func handleTap() {
+        switch menuItem.action {
+        case .startOver:
+            MapFromToViewModel.shared.resetAction()
+            moveToPlanTripPage()
+        case .openExternalWeb(let value):
+            guard let url = URL(string: value),
+                  let scheme = url.scheme?.lowercased(),
+                  ["https", "http"].contains(scheme),
+                  url.host != nil else {
+                OTPLog.log(level: .error, info: "Invalid external web menu URL")
+                return
+            }
+            openMenuURL(url)
+        case .phoneCall(let value):
+            let number = value.filter { $0.isASCII && ($0.isNumber || $0 == "+") }
+            guard number.contains(where: { $0.isNumber }),
+                  let url = URL(string: "tel://\(number)") else {
+                OTPLog.log(level: .error, info: "Invalid phone menu number")
+                return
+            }
+            openMenuURL(url)
+        case .none:
+            break
+        case .unknown:
+            OTPLog.log(level: .warning, info: "Unsupported menu action")
+        }
+        HomeViewModel.shared.pubOpenSideMenu = false
+    }
+
+    @MainActor private func openMenuURL(_ url: URL) {
+        UIApplication.shared.open(url, options: [:]) { success in
+            if !success {
+                OTPLog.log(level: .error, info: "Unable to open menu action")
+                AlertManager.shared.presentAlert(message: "Unable to open this menu item.".localized())
+            }
+        }
     }
     
     func moveToPlanTripPage() {

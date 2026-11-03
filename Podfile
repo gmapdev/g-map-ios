@@ -1,4 +1,4 @@
-source 'https://github.com/CocoaPods/Specs.git'
+source 'https://cdn.cocoapods.org/'
 project 'ATLRides.xcodeproj'
 platform :ios, '13.0'
 inhibit_all_warnings!
@@ -56,7 +56,7 @@ post_install do |installer|
       end
 
       # Set IPHONEOS_DEPLOYMENT_TARGET to avoid warnings
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.6'
 
       # Exclude arm64 architecture for simulator builds to support x86_64
       config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'

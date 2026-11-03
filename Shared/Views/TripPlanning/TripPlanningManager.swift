@@ -194,6 +194,7 @@ class TripPlanningManager: ObservableObject {
         pubIsStillLoadingItineraries = true
         numberOfReturnRequests = 0
         self.graphQLRoutingErrors.removeAll()
+        let batchId = generateBatchId()
         guard let to = SearchManager.shared.to,
               let from = SearchManager.shared.from else {
             return
@@ -247,7 +248,7 @@ class TripPlanningManager: ObservableObject {
             let outputArray = filteredSelectedModes
             let (fromPlaceEncoded, toPlaceEncoded, date, time, wheelchair, bannedRouteObject, arBy, walkReluctanceValue, walkSpeed, requestParams, modeType, stringMode, mobilityProfile) = getRequestParam(from: from, to: to, dateSettings: date, modes: outputArray, modeCombination: sentTransportModeCombination, bannedRoutes: bannedRoutes, criterias: criterias)
             
-            tripProvider.retrieveTripPlanUsingGraphQL(fromPlaceEncoded: fromPlaceEncoded, toPlaceEncoded: toPlaceEncoded, date: date, time: time, wheelchair: wheelchair, bannedRouteObject: bannedRouteObject, arBy: arBy, walkReluctanceValue: walkReluctanceValue, walkSpeed: walkSpeed, requestParams: requestParams, modeType: modeType, mobilityProfile: mobilityProfile) { tripPlan, error, serverResponseCode, rawResponse in
+            tripProvider.retrieveTripPlanUsingGraphQL(fromPlaceEncoded: fromPlaceEncoded, toPlaceEncoded: toPlaceEncoded, date: date, time: time, wheelchair: wheelchair, bannedRouteObject: bannedRouteObject, arBy: arBy, walkReluctanceValue: walkReluctanceValue, walkSpeed: walkSpeed, requestParams: requestParams, modeType: modeType, mobilityProfile: mobilityProfile, batchId: batchId) { tripPlan, error, serverResponseCode, rawResponse in
                 DispatchQueue.main.async { [self] in
                     
                     numberOfReturnRequests += 1
@@ -397,16 +398,21 @@ class TripPlanningManager: ObservableObject {
         
         // Special variable for Mobility Profile
         var mobilityMode : String?
-        if AppSession.shared.loginInfo != nil {
+        if FeatureConfig.shared.isMobilityProfileEnable, AppSession.shared.loginInfo != nil {
             if let mobilityProfile = MobileQuestionnairViewModel.shared.selectedMobilityProfile {
                  mobilityMode = mobilityProfile.mobilityMode ?? "None"
             }
-            if !(TravelCompanionsViewModel.shared.pubDependents.isEmpty) && !(TripSettingsViewModel.shared.pubSelectedMobilityProfile.lowercased() == "myself"){
+            if FeatureConfig.shared.isTravelCompanionEnable && !(TravelCompanionsViewModel.shared.pubDependents.isEmpty) && !(TripSettingsViewModel.shared.pubSelectedMobilityProfile.lowercased() == "myself"){
                 mobilityMode = TravelCompanionsViewModel.shared.setMobilityFor(selectedUser: TripSettingsViewModel.shared.pubSelectedMobilityProfile)
             }
         }
         
         return (fromPlaceEncoded, toPlaceEncoded, date, time, wheelchair, bannedRouteObject, arBy, walkReluctanceValue, walkSpeed, requestParams, modeType, stringModes, mobilityMode)
+    }
+
+    func generateBatchId() -> String {
+        let characters = Array("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+        return String((0..<9).map { _ in characters[Int.random(in: characters.indices)] })
     }
     
     /// Filter itineraries.

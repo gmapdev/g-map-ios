@@ -111,6 +111,9 @@ public final class FeatureConfig: ConfigInterface, ObservableObject{
         case modes = "Modes"
         case indoor_nav = "Indoor Navigation"
         case live_tracking = "Live Tracking"
+        case preview_trip = "Preview Trip"
+        case travel_companion = "Travel Companion"
+        case mobility_profile = "Mobility Profile"
     }
     
     /// Feature info.
@@ -958,6 +961,7 @@ public final class FeatureConfig: ConfigInterface, ObservableObject{
                     for key in keys{
                         if let menuItems = items[key] as? [String : Any]{
                             var option = MenuOption(title: nil, icon: nil, type: nil, url: nil, order: nil)
+                            option.configKey = key
                             if let title = menuItems["title"] as? String{
                                 option.title = title
                             }
@@ -970,6 +974,7 @@ public final class FeatureConfig: ConfigInterface, ObservableObject{
                             if let url = menuItems["url"] as? String{
                                 option.url = url
                             }
+                            option.value = menuItems["value"] as? String ?? option.url
                             if let isVisible = menuItems["isVisible"] as? Bool{
                                 option.isVisible = isVisible
                             }
@@ -1122,6 +1127,7 @@ public final class FeatureConfig: ConfigInterface, ObservableObject{
     /// This is used to enable the questionairs page when user create account or in the profile page.
     public var enable_mobile_questionairs: Bool {
         get{
+            guard isMobilityProfileEnable else { return false }
             if let feature = featureInfo(.login),
                let detail = feature["detail"] as? [String: Any],
                let is_enabled = detail["is_enabled"] as? Bool,
@@ -1130,5 +1136,34 @@ public final class FeatureConfig: ConfigInterface, ObservableObject{
             }
             return false
         }
+    }
+
+    // Older public configurations do not contain these feature sections.
+    public var isPreviewTripEnable: Bool {
+        return featureEnabled(.preview_trip)
+    }
+
+    public var isTravelCompanionEnable: Bool {
+        return featureEnabled(.travel_companion)
+    }
+
+    public var isMobilityProfileEnable: Bool {
+        return featureEnabled(.mobility_profile)
+    }
+
+    private func featureEnabled(_ feature: Feature) -> Bool {
+        guard let info = featureInfo(feature),
+              let detail = info["detail"] as? [String: Any] else {
+            return true
+        }
+        return detail["is_enabled"] as? Bool ?? true
+    }
+
+    public var visible_store_trip_history_option: Bool {
+        guard let feature = featureInfo(.login),
+              let detail = feature["detail"] as? [String: Any] else {
+            return true
+        }
+        return detail["visible_store_trip_history_option"] as? Bool ?? true
     }
 }

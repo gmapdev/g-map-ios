@@ -26,6 +26,7 @@ fileprivate struct OTPLogItem: Hashable, Codable
 	
 	/// Define the parameters that when we log this record, it will be convert to the String for display purpose
 	var parameters: String?
+    var logDateTimeReadable: String? = nil
 	
 	/// Used to get the file name without the path information.
 	var prettyLogFileName: String {
@@ -39,10 +40,10 @@ fileprivate struct OTPLogItem: Hashable, Codable
 		}
 	}
 	
-	/// Used to get the current timezone, Date Time in yyyy-MM-dd HH:mm:ss.SSSS
+	/// Used to get the current timezone, Date Time in yyyy-MM-dd HH:mm:ss.SSS
 	var  prettyLogDateTime: String {
 		get {
-			return OTPUtils.convertTimestampToLocal(logDateTime, toFormat: "yyyy-MM-dd HH:mm:ss.SSSS")
+			return logDateTimeReadable ?? OTPUtils.convertTimestampToLocal(logDateTime, toFormat: "yyyy-MM-dd HH:mm:ss.SSS")
 		}
 	}
 }
@@ -165,6 +166,12 @@ public class OTPLog: NSObject {
 	}
 	
 	// MARK: PUBLIC FUNCTION
+
+    public static func flush() {
+        shared.logContainerLock.sync {
+            shared.flushLogToDisk()
+        }
+    }
 	
 	/// This function is used to clear and delete the log file in the documentation folder. it will block the process until it is done.
  /// Removes log file.
@@ -245,7 +252,8 @@ public class OTPLog: NSObject {
 				parameterString = OTPUtils.objToJSONString(object: params)
 			}
 			
-			let logEntry = OTPLogItem(logLevel: level, logDateTime: Date().timeIntervalSince1970, logMessage: info, fileName: fileName, functionName: functionName, line: lineNumber, parameters: parameterString)
+            let timestamp = Date().timeIntervalSince1970
+			let logEntry = OTPLogItem(logLevel: level, logDateTime: timestamp, logMessage: info, fileName: fileName, functionName: functionName, line: lineNumber, parameters: parameterString, logDateTimeReadable: OTPUtils.convertTimestampToLocal(timestamp, toFormat: "yyyy-MM-dd HH:mm:ss.SSS"))
 
 			// Output the log information
 			if shared._displayLogInConsole {

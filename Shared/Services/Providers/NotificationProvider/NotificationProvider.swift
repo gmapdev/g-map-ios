@@ -139,6 +139,15 @@ class NotificationProvider: BaseProvider {
     ///   - String?: Parameter description
     /// - Returns: Void)
     func updateNotification(tripNotification: [String: Any], forCreation: Bool = false,  completion:@escaping (Bool, String?)->Void){
+        guard let id = tripNotification["id"] as? String, !id.isEmpty,
+              let userId = tripNotification["userId"] as? String, !userId.isEmpty,
+              let itinerary = tripNotification["itinerary"] as? [String: Any], !itinerary.isEmpty,
+              let params = tripNotification["otp2QueryParams"] as? [String: Any], !params.isEmpty,
+              JSONSerialization.isValidJSONObject(tripNotification) else {
+            OTPLog.log(level: .error, info: "Refusing to send incomplete trip notification payload")
+            completion(false, "Trip information is incomplete. Please refresh and try again.".localized())
+            return
+        }
 		let apiAccessProvider = APIAccessProvider()
 		var requestURL = apiAccessProvider.baseURL + NotificationEndPoint.updateTripNotification.url().endpoint + "/" + (tripNotification["id"] as? String ?? "")
 		var requestMethod = NotificationEndPoint.updateTripNotification.url().method
@@ -156,6 +165,7 @@ class NotificationProvider: BaseProvider {
 			}catch{
 				OTPLog.log(level: .error, info: "No request payload can be found \(error)")
 				completion(false, "No request payload can be found")
+				return
 			}
 			
 			let publisher:AnyPublisher<APIAccessResponse<TripNotificationResponse>, Error> = apiAccessProvider.run(request)
@@ -163,6 +173,7 @@ class NotificationProvider: BaseProvider {
 					switch result {
 					case .failure(let error):
 						OTPLog.log(level: .error, info: "update notification failed: \(error)")
+                        completion(false, "Unable to save this trip. Please try again.".localized())
 					case .finished:
 						OTPLog.log(level: .info, info: "Complete Sink")
 						break
@@ -184,6 +195,9 @@ class NotificationProvider: BaseProvider {
 				completion(result.success, errorMessage)
 			}
 			.store(in: &anyCancellables)
+        } else {
+            OTPLog.log(level: .error, info: "Invalid trip notification request URL")
+            completion(false, "Unable to save this trip. Please try again.".localized())
 		}
 	}
     
