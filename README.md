@@ -214,7 +214,7 @@ The `config.json` file should contain:
           "jibestream_endpoint_url": "https://api.jibestream.com",
           "jibestream_client_id": "your-own-information",
           "jibestream_client_secret": "your-own-information",
-          "jibesream_customer_id": "your-own-information",
+          "jibesream_customer_id": 00,
           "extends_sdk_url": "https://v2.tendegrees.net",
           "extends_sdk_key_ios": "your-own-information",
           "extends_sdk_key_android": "your-own-information",
